@@ -1,5 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource,EntityManager } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UserEntity } from 'src/student/entities/user-entity';
 
 @Injectable()
 export class UserService {
@@ -12,7 +14,27 @@ export class UserService {
       }
 
       //create user
-      async createUser(){
+      async createUser(data:CreateUserDto){
+            try{
+                  const user = await this.manager.findOneBy(UserEntity,{nic: data.nic})
+                  if(user){
+                        throw new Error('User is Already exists,go to login')
+                  }
+                  const createUser = await this.manager.create(UserEntity, {
+                        nic: data.nic,
+                        firstName: data.firstName,
+                        middleName: data.middleName,
+                        LastName: data.LastName,
+                        age: data.age,
+                        tel: data.tel
+                  })
+
+                  await this.manager.save(UserEntity, createUser)
+
+                  return {message: 'user create successfullly',createUser}
+            }catch(error){
+                  throw new NotFoundException(`${error.message}`)
+            };
             
       }
 
